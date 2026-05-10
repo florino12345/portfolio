@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My To-Do List</title>
+
+  <!-- Google Fonts: DM Serif Display for headings, DM Sans for body -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       CSS VARIABLES — change these to retheme everything instantly
+    ============================================================ */
+    :root {
+      --bg:          #faf7f2;       /* warm off-white background */
+      --surface:     #ffffff;
+      --border:      #e8e0d5;
+      --accent:      #10883e83;       /* warm terracotta orange */
+      --accent-soft: rgba(56, 136, 89, 0.08);
+      --text:        #1a1410;
+      --muted:       #9a8f85;
+      --done-bg:     #f0ede8;
+      --font-head:   'DM Serif Display', serif;
+      --font-body:   'DM Sans', sans-serif;
+      --radius:      14px;
+      --shadow:      0 2px 16px rgba(0,0,0,0.07);
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;           /* centers the card on the page */
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ============================================================
+       MAIN CARD — the white container that holds everything
+    ============================================================ */
+    .app {
+      width: 100%;
+      max-width: 540px;        /* never wider than 540px */
+      margin-top: 3rem;
+    }
+
+    /* ============================================================
+       HEADER
+    ============================================================ */
+    .header {
+      margin-bottom: 2rem;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.4rem;
+    }
+
+    /* Big serif heading */
+    .app-title {
+      font-family: var(--font-head);
+      font-size: 2.6rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    /* Accent dot after the title */
+    .app-title span {
+      color: var(--accent);
+    }
+
+    /* Live counter showing how many tasks are left */
+    .task-count {
+      background: var(--accent);
+      color: white;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.3rem 0.75rem;
+      border-radius: 100px;
+      /* JavaScript will update this text */
+    }
+
+    .header-date {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    /* ============================================================
+       INPUT AREA — where you type new tasks
+       This is an HTML form using flexbox to put input + button side by side
+    ============================================================ */
+    .input-area {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+    }
+
+    /* The text input field */
+    .task-input {
+      flex: 1;                 /* takes all remaining space */
+      padding: 0.9rem 1.1rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    /* Highlight the border when user clicks into the input */
+    .task-input:focus {
+      border-color: var(--accent);
+    }
+
+    .task-input::placeholder {
+      color: var(--muted);
+    }
+
+    /* Add button */
+    .add-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.9rem 1.4rem;
+font-family: var(--font-body);
+      font-size: 1.3rem;
+      cursor: pointer;         /* shows hand cursor on hover */
+      transition: opacity 0.2s, transform 0.15s;
+      line-height: 1;
+    }
+
+    .add-btn:hover {
+      opacity: 0.85;
+      transform: scale(1.05);
+    }
+
+    /* Active (click) animation */
+    .add-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* ============================================================
+       FILTER TABS — All / Active / Completed
+       These are buttons that filter which tasks you see
+    ============================================================ */
+    .filters {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .filter-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* The active (selected) filter tab */
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* ============================================================
+       TASK LIST — the <ul> that holds all tasks
+    ============================================================ */
+    .task-list {
+      list-style: none;        /* removes default bullet points */
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    /* ============================================================
+       TASK ITEM — each individual task row
+       JavaScript creates these dynamically when you add a task
+    ============================================================ */
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      box-shadow: var(--shadow);
+      /* Animate new tasks sliding in from below */
+      animation: slideIn 0.25s ease;
+      transition: opacity 0.2s;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ============================================================
+       CUSTOM CHECKBOX
+       We hide the real <input type="checkbox"> and style our own
+    ============================================================ */
+
+    /* Hide the real browser checkbox */
+    .task-item input[type="checkbox"] {
+      display: none;
+    }
+
+    /* Our custom visual checkbox — the <label> element */
+    .checkbox-label {
+      width: 22px;
+      height: 22px;
+      min-width: 22px;         /* prevents it from shrinking */
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      font-size: 0.75rem;
+      color: white;
+    }
+
+    .checkbox-label:hover {
+      border-color: var(--accent);
+    }
+
+    /* When the hidden checkbox IS checked, style the label as filled */
+    /* :checked is a CSS pseudo-class — it targets checked checkboxes */
+    /* ~ is the "sibling" selector — targets .checkbox-label after the checkbox */
+    input[type="checkbox"]:checked ~ .checkbox-label {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Show a checkmark inside when checked */
+    input[type="checkbox"]:checked ~ .checkbox-label::after {
+      content: '✓';
+    }
+
+    /* The task text itself */
+    .task-text {
+      flex: 1;                 /* fills remaining space */
+      font-size: 0.95rem;
+      line-height: 1.4;
+      transition: all 0.2s;
+    }
+
+    /* Strikethrough when task is completed */
+    .task-item.done .task-text {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+/* Fade the whole row when done */
+    .task-item.done {
+      background: var(--done-bg);
+      border-color: transparent;
+      box-shadow: none;
+    }
+
+    /* Delete button — the × on the right of each task */
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      line-height: 1;
+      transition: color 0.2s, background 0.2s;
+      /* Hidden by default, shown on hover */
+      opacity: 0;
+    }
+
+    /* Show delete button when hovering the task row */
+    .task-item:hover .delete-btn {
+      opacity: 1;
+    }
+
+    .delete-btn:hover {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    /* ============================================================
+       EMPTY STATE — shown when there are no tasks
+    ============================================================ */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      display: none;           /* hidden by default, JS shows it */
+    }
+
+    .empty-state .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .empty-state p {
+      font-size: 0.95rem;
+    }
+
+    /* ============================================================
+       FOOTER BAR — shows count and clear button
+    ============================================================ */
+    .list-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    /* "Clear completed" button */
+    .clear-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .clear-btn:hover {
+      color: var(--accent);
+    }
+
+    /* ============================================================
+       MOBILE — minor tweaks for small screens
+    ============================================================ */
+    @media (max-width: 480px) {
+      .app {
+        margin-top: 1.5rem;
+      }
+
+      .app-title {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <!-- ============================================================
+         HEADER
+    ============================================================ -->
+    <div class="header">
+      <div class="header-top">
+        <h1 class="app-title">My Tasks<span>.</span></h1>
+        <!-- JavaScript updates this number live -->
+        <span class="task-count" id="taskCount">0 left</span>
+      </div>
+      <!-- JavaScript fills in today's date here -->
+      <p class="header-date" id="todayDate"></p>
+    </div>
+
+
+    <!-- ============================================================
+         INPUT AREA
+         The input field and Add button sit side by side using flexbox.
+         Pressing Enter in the input also adds a task (handled in JS).
+    ============================================================ -->
+    <div class="input-area">
+      <input
+        type="text"
+        class="task-input"
+        id="taskInput"
+        placeholder="What are you doing today?"
+        maxlength="120"
+      />
+      <button class="add-btn" id="addBtn" title="Add task">+</button>
+    </div>
+
+
+    <!-- ============================================================
+         FILTER TABS
+         Three buttons: All, Active, Completed
+         JavaScript listens for clicks and filters the list
+    ============================================================ -->
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="active">Active</button>
+      <button class="filter-btn" data-filter="done">Completed</button>
+    </div>
+
+
+      <!-- ============================================================
+         TASK LIST
+T
+his <ul> starts empty. JavaScript adds <li> items here
+         every time you add a task. This is called "DOM manipulation".
+    ============================================================ -->
+    <ul class="task-list" id="taskList"></ul>
+
+
+    <!-- ============================================================
+         EMPTY STATE
+         Shown by JavaScript when there are no tasks to display
+    ============================================================ -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">✅</div>
+      <p>Nothing here yet — add your first task above!</p>
+    </div>
+
+
+    <!-- ============================================================
+         FOOTER BAR
+    ============================================================ -->
+    <div class="list-footer">
+      <span id="footerCount">0 tasks</span>
+      <button class="clear-btn" id="clearBtn">Clear completed</button>
+    </div>
+
+  </div><!-- end .app -->
+
+
+  <!-- ============================================================
+       JAVASCRIPT
+       This is the brain of the app. Read through it top to bottom —
+       each section is labelled and explained.
+  ============================================================ -->
+  <script>
+
+    // ============================================================
+    // 1. GRAB ELEMENTS FROM THE PAGE
+    //    document.getElementById() finds an HTML element by its id.
+    //    We store each one in a variable so we can use it later.
+    // ============================================================
+    const taskInput  = document.getElementById('taskInput');
+    const addBtn     = document.getElementById('addBtn');
+    const taskList   = document.getElementById('taskList');
+    const taskCount  = document.getElementById('taskCount');
+    const footerCount = document.getElementById('footerCount');
+    const emptyState = document.getElementById('emptyState');
+    const clearBtn   = document.getElementById('clearBtn');
+    const todayDate  = document.getElementById('todayDate');
+
+    // ============================================================
+    // 2. SHOW TODAY'S DATE IN THE HEADER
+    //    Date() gives us the current date. toLocaleDateString()
+    //    formats it nicely, e.g. "Thursday, 7 May 2026"
+    // ============================================================
+    todayDate.textContent = new Date().toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    // ============================================================
+    // 3. OUR DATA — the tasks array
+    //    All tasks are stored here as objects.
+    //    Each task has: { id, text, done }
+    //    We start with a couple of example tasks.
+    // ============================================================
+    let tasks = [
+      { id: 1, text: 'Build my portfolio website ✅', done: true },
+      { id: 2, text: 'Learn about JavaScript arrays',  done: true},
+      { id: 3, text: 'Add a project to my portfolio',  done: false },
+      { id: 4, text: 'Write a blog post about web development',  done: false },
+       { id: 5, text: 'Write a blog post on claude AI experience  ',  done: false },
+    ];
+
+    // Tracks which filter is active: 'all', 'active', or 'done'
+    let currentFilter = 'all';
+
+    // ============================================================
+    // 4. RENDER FUNCTION
+    //    This function reads the tasks array and draws the list.
+    //    Whenever tasks change, we call renderTasks() to redraw.
+    //    This pattern — store data, then render — is used in every
+    //    JavaScript framework (React, Vue, etc.)
+    // ============================================================
+    function renderTasks() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+
+      // Filter tasks based on the active tab
+      const filtered = tasks.filter(task => {
+        if (currentFilter === 'active') return !task.done;
+        if (currentFilter === 'done')   return  task.done;
+        return true; // 'all' — show everything
+      });
+
+      // Clear the list before redrawing
+      // innerHTML = '' removes all child elements inside the <ul>
+      taskList.innerHTML = '';
+
+      // Show or hide the empty state message
+      emptyState.style.display = filtered.
+length === 0 ? 'block' : 'none';
+
+      // Loop through filtered tasks and create an <li> for each one
+      filtered.forEach(task => {
+
+        // createElement() creates a new HTML element in memory
+        const li = document.createElement('li');
+        li.className = 'task-item' + (task.done ? ' done' : '');
+        li.dataset.id = task.id; // store the task id on the element
+
+        // innerHTML lets us write HTML as a string inside the element
+        // Notice: we use template literals (backticks) to insert the task values
+        li.innerHTML = `
+          <input type="checkbox" id="cb-${task.id}" ${task.done ? 'checked' : ''} />
+          <label class="checkbox-label" for="cb-${task.id}"></label>
+          <span class="task-text">${task.text}</span>
+          <button class="delete-btn" title="Delete task">✕</button>
+        `;
+
+        // When the checkbox is toggled, mark the task done/undone
+        // querySelector() finds the first matching element INSIDE li
+        li.querySelector('input').addEventListener('change', () => {
+          toggleTask(task.id);
+        });
+
+        // When the delete button is clicked, remove the task
+        li.querySelector('.delete-btn').addEventListener('click', () => {
+          deleteTask(task.id);
+        });
+
+        // Append adds the <li> as a child of the <ul>
+        taskList.appendChild(li);
+      });
+
+      // Update the counters after every render
+      updateCount();
+    }
+
+    // ============================================================
+    // 5. ADD A TASK
+    //    Reads the input value, validates it's not empty,
+    //    creates a new task object, pushes it to the array,
+    //    clears the input, then re-renders.
+    // ============================================================
+    function addTask() {
+      // .trim() removes whitespace from start and end
+      const text = taskInput.value.trim();
+
+      // Don't add empty tasks
+      if (!text) {
+        taskInput.focus(); // put cursor back in the input
+        return;
+      }
+
+      // Create a new task object
+      const newTask = {
+        id:   Date.now(), // unique number based on timestamp
+        text: text,
+        done: false
+      };
+
+      // Push adds to the END of an array
+      tasks.push(newTask);
+
+      // Clear the input field
+      taskInput.value = '';
+      taskInput.focus();
+
+      // Redraw the list
+      renderTasks();
+    }
+
+    // ============================================================
+    // 6. TOGGLE A TASK (mark done / undone)
+    //    find() searches the array for the task with matching id.
+    //    Then we flip its done value: true → false, false → true
+    // ============================================================
+    function toggleTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (task) task.done = !task.done; // ! means "flip the boolean"
+      renderTasks();
+    }
+
+    // ============================================================
+    // 7. DELETE A TASK
+    //    filter() returns a NEW array without the deleted task.
+    //    We replace the tasks array with this new filtered array.
+    // ============================================================
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      renderTasks();
+    }
+
+    // ============================================================
+    // 8. UPDATE THE COUNTERS
+    //    Counts active (not done) tasks and updates the badge + footer
+    // ============================================================
+    function updateCount() {
+      const activeCount = tasks.filter(t => !t.done).length;
+      const totalCount  = tasks.length;
+
+      taskCount.textContent  = `${activeCount} left`;
+      footerCount.textContent = `${totalCount} task${totalCount !== 1 ? 's' : ''}`;
+    }
+
+    // ============================================================
+    // 9. CLEAR COMPLETED TASKS
+    //    Removes all tasks where done === true
+    // ============================================================
+    clearBtn.addEventListener('click', () => {
+      tasks =
+tasks.filter(t => !t.done);
+      renderTasks();
+    });
+
+    // ============================================================
+    // 10. FILTER TABS
+    //     When a filter button is clicked:
+    //     - Update currentFilter
+    //     - Update which button looks "active" (CSS class)
+    //     - Redraw the list
+    // ============================================================
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+
+        // Update the active filter value
+        currentFilter = btn.dataset.filter;
+
+        // Remove 'active' class from all filter buttons
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('active');
+        });
+
+        // Add 'active' class to the clicked button
+        btn.classList.add('active');
+
+        renderTasks();
+      });
+    });
+
+    // ============================================================
+    // 11. EVENT LISTENERS FOR ADDING TASKS
+    //     Two ways to add: click the + button OR press Enter
+    // ============================================================
+
+    // Clicking the + button
+    addBtn.addEventListener('click', addTask);
+
+    // Pressing Enter inside the input field
+    // event.key tells us which key was pressed
+    taskInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        addTask();
+      }
+    });
+
+    // ============================================================
+    // 12. INITIAL RENDER
+    //     Draw the list once when the page first loads
+    // ============================================================
+    const saved= localStorage.getItem('tasks');
+    if (saved) tasks = JSON.parse(saved);
+    renderTasks();
+
+  </script>
+
+</body>
+</html>
+

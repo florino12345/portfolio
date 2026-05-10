@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+  /* Page background — centers the calculator on screen */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #1a1a2e;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Arial', sans-serif;
+  }
+
+  /* The calculator container */
+  .calculator {
+    background: #16213e;
+    border-radius: 24px;
+    padding: 1.5rem;
+    width: 320px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  }
+
+  /* The number display screen */
+  .display {
+    background: #0f3460;
+    color: white;
+    font-size: 2.8rem;
+    text-align: right;
+    padding: 1rem 1.25rem;
+    border-radius: 14px;
+    margin-bottom: 1.25rem;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    /* Prevents long numbers from breaking layout */
+    overflow: hidden;
+    word-break: break-all;
+  }
+
+  /* Button grid — 4 columns */
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+
+  /* Every button shared style */
+  button {
+    background: #1a1a2e;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 1.1rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  button:hover  { background: #0f3460; }
+  button:active { transform: scale(0.94); }
+
+  /* Orange operator buttons (÷ × − +) */
+  button.operator {
+    background: #e94560;
+    color: white;
+  }
+  button.operator:hover { background: #c73652; }
+
+  /* Light coloured top row buttons (C, +/-, %) */
+  button.top {
+    background: #533483;
+    color: white;
+  }
+  button.top:hover { background: #3d2761; }
+
+  /* Equals button */
+  button.equals {
+    background: #e94560;
+    color: white;
+  }
+  button.equals:hover { background: #c73652; }
+
+  /* Zero button spans 2 columns */
+  .zero {
+    grid-column: span 2;
+    text-align: left;
+    padding-left: 1.4rem;
+  }
+</style>
+</head>
+<body>
+    
+<div class="calculator">
+
+    <!-- The screen where numbers show up -->
+     <div class="display" id="display">0</div>
+
+     <!-- Button Grid -->
+    <div class="buttons">
+        <button>C</button>
+        <button>±</button>
+        <button>%</button>
+        <button>÷</button>
+
+        <button>7</button>
+        <button>8</button>
+        <button>9</button>
+        <button>×</button>
+
+        <button>4</button>
+        <button>5</button>
+        <button>6</button>
+        <button>−</button>
+
+        <button>1</button>
+        <button>2</button>
+        <button>3</button>
+        <button>+</button>
+
+        <button class ="zero">0</button>
+        <button>.</button>
+        <button>=</button>
+    </div>  
+
+</div>
+<script>
+  // Grab the display element
+  const display = document.getElementById('display');
+
+  // These variables track the calculator's state
+  let currentInput = '';   // what the user is currently typing
+  let firstNumber  = '';   // the first number before an operator
+  let operator     = '';   // which operator was pressed (+, -, etc.)
+  let freshStart   = false; // true after = is pressed
+
+  // -----------------------------------------------
+  // HANDLE EVERY BUTTON CLICK
+  // We listen on the whole .buttons grid — one listener
+  // catches ALL button clicks. This is called "event delegation"
+  // -----------------------------------------------
+  // -----------------------------------------------
+  // KEYBOARD SUPPORT
+  // Listens for any key press on the whole page
+  // event.key tells us exactly which key was pressed
+  // -----------------------------------------------
+  document.addEventListener('keydown', (event) => {
+    const keyMap = {
+      '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
+      '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+      '+': '+', '-': '−', '*': '×', '/': '÷',
+      'Enter': '=', 'Escape': 'C', '.': ',' , '%': '%'
+    };
+
+    // Check if the key pressed matches anything in our map
+    const mapped = keyMap[event.key];
+    if (mapped) handleInput(mapped);
+  });
+  document.querySelector('.buttons').addEventListener('click', (e) => {
+
+    // e.target is the button that was actually clicked
+    const btn = e.target.innerText;
+
+    // Ignore clicks that land on the grid gap (not a button)
+    if (!btn) return;
+
+    handleInput(btn);
+  });
+
+  // -----------------------------------------------
+  // MAIN LOGIC — decides what to do for each button
+  // -----------------------------------------------
+  function handleInput(btn) {
+
+    // --- CLEAR ---
+    if (btn === 'C') {
+      currentInput = '';
+      firstNumber  = '';
+      operator     = '';
+      freshStart   = false;
+      updateDisplay('0');
+      return;
+    }
+
+    // --- EQUALS ---
+    if (btn === '=') {
+      if (!firstNumber || !operator) return; // nothing to calculate
+      const result = calculate(firstNumber, currentInput, operator);
+      updateDisplay(result);
+      currentInput = String(result);
+      firstNumber  = '';
+      operator     = '';
+      freshStart   = true;
+      return;
+    }
+
+    // --- OPERATORS (÷ × − +) ---
+    if (['÷', '×', '−', '+'].includes(btn)) {
+      if (!currentInput) return; // no number typed yet
+      firstNumber  = currentInput;
+      operator     = btn;
+      currentInput = '';
+      return;
+    }
+
+    // --- PERCENTAGE ---
+    if (btn === '%') {
+      if (!currentInput) return;
+      currentInput = String(parseFloat(currentInput) / 100);
+      updateDisplay(currentInput);
+      return;
+    }
+
+    // --- PLUS/MINUS TOGGLE ---
+    if (btn === '+/-') {
+      if (!currentInput) return;
+      currentInput = String(parseFloat(currentInput) * -1);
+      updateDisplay(currentInput);
+      return;
+    }
+
+    // --- DECIMAL POINT ---
+    // Only allow one dot per number
+    if (btn === '.') {
+      if (currentInput.includes('.')) return;
+      currentInput += currentInput ? '.' : '0.';
+      updateDisplay(currentInput);
+      return;
+    }
+
+    // --- NUMBER BUTTONS (0-9) ---
+    if (freshStart) {
+      currentInput = '';
+      freshStart = false;
+    }
+    currentInput += btn;
+    updateDisplay(currentInput);
+  }
+
+  // -----------------------------------------------
+  // CALCULATE — takes two numbers and an operator
+  // parseFloat() converts text like "9" into the number 9
+  // -----------------------------------------------
+  function calculate(a, b, op) {
+    const numA = parseFloat(a);
+    const numB = parseFloat(b);
+
+    if (op === '+') return numA + numB;
+    if (op === '−') return numA - numB;
+    if (op === '×') return numA * numB;
+    if (op === '÷') {
+      if (numB === 0) return 'Error'; // can't divide by zero!
+      return numA / numB;
+    }
+  }
+
+  // -----------------------------------------------
+  // UPDATE DISPLAY — shows a value on the screen
+  // -----------------------------------------------
+  function updateDisplay(value) {
+    display.textContent = value;
+  }
+
+</script>
+</body>
+
+</html>
