@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Football Quiz</title>
+  <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    background: linear-gradient(135deg, #1a6b2f, #0d3d1a);
+  }
+
+  /* Main card */
+  .quiz-app {
+    background: white;
+    border-radius: 24px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 560px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+    color: #1a6b2f;
+  }
+
+  .score-board {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  .score-board strong {
+    color: #1a6b2f;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    background: #e8f5e9;
+    border-radius: 100px;
+    height: 8px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #1a6b2f;
+    border-radius: 100px;
+    width: 10%;
+    transition: width 0.4s ease;
+  }
+
+  .question-count {
+    font-size: 0.8rem;
+    color: #999;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Question box */
+  .question-box {
+    background: #f9fafb;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+  }
+
+  .question-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.5;
+  }
+
+  /* Answer buttons grid */
+  .answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .answer-btn {
+    background: #f0f4f0;
+    border: 2px solid transparent;
+    border-radius: 14px;
+    padding: 1rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: #1a1a1a;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    line-height: 1.4;
+  }
+
+  .answer-btn:hover {
+    background: #e8f5e9;
+    border-color: #1a6b2f;
+  }
+
+  /* Correct answer highlight */
+  .answer-btn.correct {
+    background: #e8f5e9;
+    border-color: #1a6b2f;
+    color: #1a6b2f;
+  }
+
+  /* Wrong answer highlight */
+  .answer-btn.wrong {
+    background: #fdecea;
+    border-color: #e53935;
+    color: #e53935;
+  }
+
+  /* Disabled state after answering */
+  .answer-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+
+  /* Next button */
+  .next-btn {
+    width: 100%;
+    background: #1a6b2f;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+
+  .next-btn:hover  { opacity: 0.85; }
+  .next-btn:active { transform: scale(0.98); }
+
+  /* Result screen */
+  .result-screen {
+    text-align: center;
+    padding: 1rem 0;
+  }
+
+  .result-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+
+  .result-screen h2 {
+    font-size: 1.8rem;
+    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+  }
+
+  .result-screen p {
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+
+  .final-score {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a6b2f;
+    margin: 1rem 0 1.5rem;
+  }
+</style>
+</head>
+<body>
+
+  <div class="quiz-app">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>⚽ Football Quiz</h1>
+      <div class="score-board">
+        <span>Score: <strong id="score">0</strong></span>
+        <span>Best: <strong id="bestScore">0</strong></span>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <p class="question-count" id="questionCount">Question 1 of 10</p>
+
+    <!-- Question -->
+    <div class="question-box">
+      <p class="question-text" id="questionText">Loading...</p>
+    </div>
+
+    <!-- Answer buttons -->
+    <div class="answers" id="answers"></div>
+
+    <!-- Next button -->
+    <button class="next-btn" id="nextBtn" style="display:none;">Next Question →</button>
+
+    <!-- Result screen (hidden until quiz ends) -->
+    <div class="result-screen" id="resultScreen" style="display:none;">
+      <div class="result-icon" id="resultIcon"></div>
+      <h2 id="resultTitle"></h2>
+      <p id="resultDesc"></p>
+      <p class="final-score" id="finalScore"></p>
+      <button class="next-btn" id="restartBtn">Play Again →</button>
+    </div>
+
+  </div>
+<script>
+  // ============================================================
+  // 1. QUIZ QUESTIONS
+  // An array of objects — each object is one question
+  // with 4 options and the correct answer
+  // ============================================================
+  const questions = [
+    {
+      question: "Which country won the 2022 FIFA World Cup?",
+      options: ["France", "Brazil", "Argentina", "Germany"],
+      answer: "Argentina"
+    },
+    {
+      question: "Who has won the most Ballon d'Or awards?",
+      options: ["Cristiano Ronaldo", "Lionel Messi", "Ronaldo", "Zidane"],
+      answer: "Lionel Messi"
+    },
+    {
+      question: "Which club has won the most UEFA Champions League titles?",
+      options: ["Barcelona", "Bayern Munich", "AC Milan", "Real Madrid"],
+      answer: "Real Madrid"
+    },
+    {
+      question: "How many players are on a football team on the pitch?",
+      options: ["9", "10", "11", "12"],
+      answer: "11"
+    },
+    {
+      question: "Which country invented football?",
+      options: ["Brazil", "Spain", "England", "France"],
+      answer: "England"
+    },
+    {
+      question: "Who is the all-time top scorer in FIFA World Cup history?",
+      options: ["Pele", "Miroslav Klose", "Ronaldo", "Gerd Muller"],
+      answer: "Miroslav Klose"
+    },
+    {
+      question: "Which African country reached the 2002 World Cup semi-finals?",
+      options: ["Nigeria", "Ghana", "Senegal", "Cameroon"],
+      answer: "Senegal"
+    },
+    {
+      question: "How long is a standard football match?",
+      options: ["80 minutes", "90 minutes", "100 minutes", "120 minutes"],
+      answer: "90 minutes"
+    },
+    {
+      question: "Which player is known as 'El Fenomeno'?",
+      options: ["Ronaldinho", "Rivaldo", "Ronaldo", "Roberto Carlos"],
+      answer: "Ronaldo"
+    },
+    {
+      question: "Which stadium is the largest in the world by capacity?",
+      options: ["Wembley", "Camp Nou", "Rungrado May Day Stadium", "Maracana"],
+      answer: "Rungrado May Day Stadium"
+    }
+  ];
+
+  // ============================================================
+  // 2. GRAB ELEMENTS
+  // ============================================================
+  const questionText  = document.getElementById('questionText');
+  const answersDiv    = document.getElementById('answers');
+  const nextBtn       = document.getElementById('nextBtn');
+  const restartBtn    = document.getElementById('restartBtn');
+  const scoreEl       = document.getElementById('score');
+  const bestScoreEl   = document.getElementById('bestScore');
+  const progressFill  = document.getElementById('progressFill');
+  const questionCount = document.getElementById('questionCount');
+  const resultScreen  = document.getElementById('resultScreen');
+  const resultIcon    = document.getElementById('resultIcon');
+  const resultTitle   = document.getElementById('resultTitle');
+  const resultDesc    = document.getElementById('resultDesc');
+  const finalScore    = document.getElementById('finalScore');
+
+  // ============================================================
+  // 3. GAME STATE — tracks where we are in the quiz
+  // ============================================================
+  let currentIndex = 0;  // which question we're on
+  let score        = 0;  // current score
+  let answered     = false; // prevents clicking twice
+
+  // Load best score from localStorage
+  let bestScore = localStorage.getItem('footballQuizBest') || 0;
+  bestScoreEl.textContent = bestScore;
+
+  // ============================================================
+  // 4. LOAD QUESTION
+  // Reads the current question from the array and renders it
+  // ============================================================
+  function loadQuestion() {
+    answered = false;
+    nextBtn.style.display = 'none';
+
+    const q = questions[currentIndex];
+
+    // Update question text
+    questionText.textContent = q.question;
+
+    // Update progress bar width
+    var percent = ((currentIndex + 1) / questions.length) * 100;
+    progressFill.style.width = percent + '%';
+
+    // Update question counter
+questionCount.textConte
+nt = 'Question ' + (currentIndex + 1) + ' of ' + questions.length;
+
+    // Clear old answer buttons
+    answersDiv.innerHTML = '';
+
+    // Create a button for each option
+    q.options.forEach(function(option) {
+      var btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.textContent = option;
+      btn.addEventListener('click', function() {
+        selectAnswer(btn, option, q.answer);
+      });
+      answersDiv.appendChild(btn);
+    });
+  }
+
+  // ============================================================
+  // 5. SELECT ANSWER
+  // Called when user clicks an answer button
+  // ============================================================
+  function selectAnswer(btn, selected, correct) {
+
+    // Prevent clicking again after answering
+    if (answered) return;
+    answered = true;
+
+    // Disable all buttons
+    var allBtns = answersDiv.querySelectorAll('.answer-btn');
+    allBtns.forEach(function(b) { b.disabled = true; });
+
+    // Check if correct
+    if (selected === correct) {
+      btn.classList.add('correct');
+      score++;
+      scoreEl.textContent = score;
+    } else {
+      // Show wrong on clicked button
+      btn.classList.add('wrong');
+      // Highlight the correct answer in green
+      allBtns.forEach(function(b) {
+        if (b.textContent === correct) b.classList.add('correct');
+      });
+    }
+
+    // Show next button
+    nextBtn.style.display = 'block';
+  }
+
+  // ============================================================
+  // 6. NEXT QUESTION
+  // Moves to the next question or shows results
+  // ============================================================
+  nextBtn.addEventListener('click', function() {
+    currentIndex++;
+
+    if (currentIndex < questions.length) {
+      loadQuestion();
+    } else {
+      showResults();
+    }
+  });
+
+  // ============================================================
+  // 7. SHOW RESULTS
+  // Displays the final score screen
+  // ============================================================
+  function showResults() {
+    // Hide quiz elements
+    document.querySelector('.question-box').style.display = 'none';
+    answersDiv.style.display = 'none';
+    nextBtn.style.display    = 'none';
+
+    // Show result screen
+    resultScreen.style.display = 'block';
+
+    // Calculate percentage
+    var percent = Math.round((score / questions.length) * 100);
+
+    // Pick emoji and message based on score
+    if (percent === 100) {
+      resultIcon.textContent  = '🏆';
+      resultTitle.textContent = 'Perfect Score!';
+      resultDesc.textContent  = 'You are a football genius!';
+    } else if (percent >= 70) {
+      resultIcon.textContent  = '⚽';
+      resultTitle.textContent = 'Great Job!';
+      resultDesc.textContent  = 'You really know your football!';
+    } else if (percent >= 40) {
+      resultIcon.textContent  = '👟';
+      resultTitle.textContent = 'Not Bad!';
+      resultDesc.textContent  = 'Keep watching more matches!';
+    } else {
+      resultIcon.textContent  = '😅';
+      resultTitle.textContent = 'Keep Practicing!';
+      resultDesc.textContent  = 'Hit the training ground and try again!';
+    }
+
+    finalScore.textContent = 'You scored ' + score + ' out of ' + questions.length + ' (' + percent + '%)';
+
+    // Save best score to localStorage
+    if (score > bestScore) {
+      bestScore = score;
+      localStorage.setItem('footballQuizBest', bestScore);
+      bestScoreEl.textContent = bestScore;
+    }
+  }
+
+  // ============================================================
+  // 8. RESTART QUIZ
+  // Resets everything and starts from question 1
+  // ============================================================
+  restartBtn.addEventListener('click', function() {
+    currentIndex = 0;
+    score        = 0;
+    scoreEl.textContent = 0;
+
+    // Show quiz elements again
+    document.querySelector('.question-box').style.display = 'flex';
+    answersDiv.style.display   = 'grid';
+    resultScreen.style.display = 'none';
+
+    loadQuestion();
+  });
+
+  // ============================================================
+  // 9. START THE QUIZ
+  // ============================================================
+  loadQuestion();
+
+</script>
+</body>
+</html>
