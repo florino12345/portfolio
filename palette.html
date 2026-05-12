@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colour Palette Generator</title>
+</head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    background: #1a1a2e;
+  }
+
+  /* Main card */
+  .app {
+    width: 100%;
+    max-width: 800px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+    color: white;
+    margin-bottom: 0.5rem;
+  }
+
+  .header p {
+    color: #888;
+    font-size: 0.95rem;
+  }
+
+  /* Palette grid — 5 colour cards side by side */
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Individual colour card */
+  .colour-card {
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .colour-card:hover {
+    transform: translateY(-6px);
+  }
+
+  /* The big colour block */
+  .colour-block {
+    height: 180px;
+    width: 100%;
+  }
+
+  /* The info area below the colour */
+  .colour-info {
+    background: #16213e;
+    padding: 0.85rem;
+    text-align: center;
+  }
+
+  .hex-code {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+  }
+
+  .copy-hint {
+    color: #555;
+    font-size: 0.72rem;
+  }
+
+  /* Generate button */
+  .generate-btn {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, #e94560, #c73652);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 1.1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+
+  .generate-btn:hover  { opacity: 0.85; }
+  .generate-btn:active { transform: scale(0.98); }
+
+  /* Toast notification — pops up when colour is copied */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: white;
+    color: #1a1a2e;
+    padding: 0.75rem 1.5rem;
+    border-radius: 100px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transition: transform 0.3s;
+    /* Hidden below the screen by default */
+  }
+
+  /* JavaScript adds this class to show the toast */
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Mobile — stack to 2 columns on small screens */
+  @media (max-width: 600px) {
+    .palette {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+<body>
+    
+    <div class="app">
+
+        <!--Header-->
+        <div class="header">
+            <h1> 🎨 Colour Palette</h1>
+            <p>Click generate to create a new palette. Click any colour to copy it!</p>
+        </div>
+
+        <!--Colour Cards-->
+        <div class="palette" id="palette">
+            <!--Colour cards will be generated here(Javascript will generate these)-->
+</div>
+
+        <!--Generate Button-->
+        <button class="generate-btn" id="generateBtn">Generate Palette✨</button>
+
+        <!--Copy Notification-->
+        <div class="toast" id="toast">
+            Colour copied to clipboard!
+        </div>
+
+</div>
+<script>
+  // ============================================================
+  // 1. GRAB ELEMENTS
+  // ============================================================
+  const palette     = document.getElementById('palette');
+  const generateBtn = document.getElementById('generateBtn');
+  const toast       = document.getElementById('toast');
+
+  // ============================================================
+  // 2. GENERATE RANDOM HEX COLOUR
+  // Math.random() gives a decimal between 0 and 1
+  // We multiply and convert to get a hex colour like #a3f4c1
+  // ============================================================
+  function randomHex() {
+    var letters = '0123456789ABCDEF';
+    var colour  = '#';
+    for (var i = 0; i < 6; i++) {
+      // Math.floor rounds down to a whole number
+      // Math.random() * 16 gives a number between 0 and 15
+      colour += letters[Math.floor(Math.random() * 16)];
+    }
+    return colour;
+  }
+
+  // ============================================================
+  // 3. GENERATE PALETTE
+  // Creates 5 random colour cards and adds them to the page
+  // ============================================================
+  function generatePalette() {
+
+    // Clear old colours
+    palette.innerHTML = '';
+
+    // Create 5 colour cards
+    for (var i = 0; i < 5; i++) {
+      var hex = randomHex();
+
+      // Create the card element
+      var card = document.createElement('div');
+      card.className = 'colour-card';
+
+      // Fill it with HTML
+      card.innerHTML =
+        '<div class="colour-block" style="background:' + hex + '"></div>' +
+        '<div class="colour-info">' +
+          '<div class="hex-code">' + hex + '</div>' +
+          '<div class="copy-hint">click to copy</div>' +
+        '</div>';
+
+      // When clicked, copy the hex code to clipboard
+      card.addEventListener('click', function() {
+        copyToClipboard(hex);
+      });
+
+      palette.appendChild(card);
+    }
+  }
+
+  // ============================================================
+  // 4. COPY TO CLIPBOARD
+  // navigator.clipboard is the browser's built in copy tool
+  // ============================================================
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+      showToast(text + ' copied!');
+    });
+  }
+
+  // ============================================================
+  // 5. SHOW TOAST NOTIFICATION
+  // Adds the 'show' class to slide it up, then removes it after 2 seconds
+  // ============================================================
+  function showToast(message) {
+    toast.textContent = message;
+    toast.classList.add('show');
+
+    // setTimeout runs code after a delay (2000ms = 2 seconds)
+    setTimeout(function() {
+      toast.classList.remove('show');
+    }, 2000);
+  }
+
+  // ============================================================
+  // 6. EVENT LISTENERS
+  // ============================================================
+
+  // Generate button click
+  generateBtn.addEventListener('click', generatePalette);
+
+  // Also generate when spacebar is pressed
+  document.addEventListener('keydown', function(e) {
+    if (e.key === ' ') generatePalette();
+  });
+
+  // ============================================================
+  // 7. GENERATE ON PAGE LOAD
+  // So the palette isn't empty when the page first opens
+  // ============================================================
+  generatePalette();
+
+</script>
+</body>
+</html>
