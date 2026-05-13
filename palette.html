@@ -160,7 +160,7 @@
 
 </div>
 <script>
-  // ============================================================
+// ============================================================
   // 1. GRAB ELEMENTS
   // ============================================================
   const palette     = document.getElementById('palette');
@@ -169,15 +169,11 @@
 
   // ============================================================
   // 2. GENERATE RANDOM HEX COLOUR
-  // Math.random() gives a decimal between 0 and 1
-  // We multiply and convert to get a hex colour like #a3f4c1
   // ============================================================
   function randomHex() {
     var letters = '0123456789ABCDEF';
     var colour  = '#';
     for (var i = 0; i < 6; i++) {
-      // Math.floor rounds down to a whole number
-      // Math.random() * 16 gives a number between 0 and 15
       colour += letters[Math.floor(Math.random() * 16)];
     }
     return colour;
@@ -185,22 +181,16 @@
 
   // ============================================================
   // 3. GENERATE PALETTE
-  // Creates 5 random colour cards and adds them to the page
   // ============================================================
   function generatePalette() {
-
-    // Clear old colours
     palette.innerHTML = '';
 
-    // Create 5 colour cards
     for (var i = 0; i < 5; i++) {
       var hex = randomHex();
 
-      // Create the card element
       var card = document.createElement('div');
       card.className = 'colour-card';
 
-      // Fill it with HTML
       card.innerHTML =
         '<div class="colour-block" style="background:' + hex + '"></div>' +
         '<div class="colour-info">' +
@@ -208,9 +198,13 @@
           '<div class="copy-hint">click to copy</div>' +
         '</div>';
 
-      // When clicked, copy the hex code to clipboard
+      // Fix: store hex in a data attribute on the card
+      card.setAttribute('data-hex', hex);
+
+      // Read hex from the card's data attribute when clicked
       card.addEventListener('click', function() {
-        copyToClipboard(hex);
+        var hexCode = this.getAttribute('data-hex');
+        copyToClipboard(hexCode);
       });
 
       palette.appendChild(card);
@@ -219,7 +213,6 @@
 
   // ============================================================
   // 4. COPY TO CLIPBOARD
-  // navigator.clipboard is the browser's built in copy tool
   // ============================================================
   function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(function() {
@@ -228,14 +221,11 @@
   }
 
   // ============================================================
-  // 5. SHOW TOAST NOTIFICATION
-  // Adds the 'show' class to slide it up, then removes it after 2 seconds
+  // 5. SHOW TOAST
   // ============================================================
   function showToast(message) {
     toast.textContent = message;
     toast.classList.add('show');
-
-    // setTimeout runs code after a delay (2000ms = 2 seconds)
     setTimeout(function() {
       toast.classList.remove('show');
     }, 2000);
@@ -244,21 +234,17 @@
   // ============================================================
   // 6. EVENT LISTENERS
   // ============================================================
-
-  // Generate button click
   generateBtn.addEventListener('click', generatePalette);
 
-  // Also generate when spacebar is pressed
   document.addEventListener('keydown', function(e) {
     if (e.key === ' ') generatePalette();
   });
 
   // ============================================================
   // 7. GENERATE ON PAGE LOAD
-  // So the palette isn't empty when the page first opens
   // ============================================================
   generatePalette();
-
 </script>
+
 </body>
 </html>
