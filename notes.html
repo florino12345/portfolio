@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes App</title>
+</head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    background: #f5f0e8;
+    padding: 2rem 1rem;
+  }
+
+  /* Main container */
+  .app {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+    color: #1a1a1a;
+  }
+
+  /* New Note button */
+  .add-btn {
+    background: #1a1a1a;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+
+  .add-btn:hover  { opacity: 0.8; }
+  .add-btn:active { transform: scale(0.97); }
+
+  /* Notes grid — masonry-like layout */
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+
+  /* Individual note card */
+  .note-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    animation: slideIn 0.25s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Note title input */
+  .note-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    border: none;
+    outline: none;
+    width: 100%;
+    background: none;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .note-title::placeholder { color: #bbb; }
+
+  /* Divider line between title and body */
+  .note-divider {
+    border: none;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  /* Note body textarea */
+  .note-body {
+    font-size: 0.9rem;
+    color: #555;
+    border: none;
+    outline: none;
+    width: 100%;
+    resize: none;
+    min-height: 100px;
+    background: none;
+    font-family: 'Segoe UI', sans-serif;
+    line-height: 1.6;
+  }
+
+  .note-body::placeholder { color: #bbb; }
+
+  /* Note footer — date and delete button */
+  .note-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+  }
+
+  .note-date {
+    font-size: 0.75rem;
+    color: #bbb;
+  }
+
+  /* Delete button */
+  .delete-btn {
+    background: none;
+    border: none;
+    color: #ddd;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 0.2rem;
+  }
+
+  .delete-btn:hover { color: #e53935; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: #bbb;
+    display: none;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Note colours — each new note gets a random colour */
+  .colour-1 { background: #fffde7; }
+  .colour-2 { background: #e8f5e9; }
+  .colour-3 { background: #e3f2fd; }
+  .colour-4 { background: #fce4ec; }
+  .colour-5 { background: #f3e5f5; }
+  .colour-6 { background: #fff3e0; }
+</style>
+<body>
+    
+    <div class="app">
+
+        <!--Header-->
+        <div class="header">
+            <h1>📝 Notes App</h1>
+        <button class="add-btn" id="addBtn">+ New Note</button>
+        </div>
+
+        <!--Notes grid - Javascript fills this -->
+        <div class="notes-grid" id="notesGrid">
+            
+            <!--Empty state - shown when no notes exist-->
+            <div class ="empty-state" id="emptyState">
+                <div class="empty-icon">🗒️</div>
+                <p>No notes yet. Click "New Note" to start!</p>
+            </div>
+
+    </div>
+
+   <script>
+  // ============================================================
+  // 1. GRAB ELEMENTS
+  // ============================================================
+  const addBtn     = document.getElementById('addBtn');
+  const notesGrid  = document.getElementById('notesGrid');
+  const emptyState = document.getElementById('emptyState');
+
+  // ============================================================
+  // 2. NOTES ARRAY
+  // Each note is an object with id, title, body, date and colour
+  // ============================================================
+  let notes = [];
+
+  // 6 pastel colours that rotate for each new note
+  const colours = ['colour-1', 'colour-2', 'colour-3', 'colour-4', 'colour-5', 'colour-6'];
+  let colourIndex = 0;
+
+  // ============================================================
+  // 3. RENDER NOTES
+  // Reads the notes array and draws all cards on the page
+  // ============================================================
+  function renderNotes() {
+    notesGrid.innerHTML = '';
+
+    // Show or hide empty state
+    emptyState.style.display = notes.length === 0 ? 'block' : 'none';
+
+    notes.forEach(function(note) {
+      var card = document.createElement('div');
+      card.className = 'note-card ' + note.colour;
+      card.setAttribute('data-id', note.id);
+
+      card.innerHTML =
+        '<input class="note-title" type="text" placeholder="Title..." value="' + note.title + '" />' +
+        '<hr class="note-divider" />' +
+        '<textarea class="note-body" placeholder="Write your note here...">' + note.body + '</textarea>' +
+        '<div class="note-footer">' +
+          '<span class="note-date">' + note.date + '</span>' +
+          '<button class="delete-btn" title="Delete note">🗑️</button>' +
+        '</div>';
+
+      // Save title when user types
+      card.querySelector('.note-title').addEventListener('input', function() {
+        updateNote(note.id, 'title', this.value);
+      });
+
+      // Save body when user types
+      card.querySelector('.note-body').addEventListener('input', function() {
+        updateNote(note.id, 'body', this.value);
+      });
+
+      // Delete note when trash icon clicked
+      card.querySelector('.delete-btn').addEventListener('click', function() {
+        deleteNote(note.id);
+      });
+
+      notesGrid.appendChild(card);
+    });
+
+    // Save to localStorage every time we render
+    saveNotes();
+  }
+
+  // ============================================================
+  // 4. ADD A NEW NOTE
+  // Creates a new note object and adds it to the array
+  // ============================================================
+  function addNote() {
+    var note = {
+      id:     Date.now(),
+      title:  '',
+      body:   '',
+      date:   new Date().toLocaleDateString('en-GB', {
+                day: 'numeric', month: 'short', year: 'numeric'
+              }),
+      colour: colours[colourIndex % colours.length]
+    };
+
+    colourIndex++;
+    notes.unshift(note); // unshift adds to the BEGINNING of the array
+    renderNotes();
+
+    // Focus the title input of the new note
+    notesGrid.querySelector('.note-title').focus();
+  }
+
+  // ============================================================
+  // 5. UPDATE A NOTE
+  // Called every time user types in title or body
+  // ============================================================
+  function updateNote(id, field, value) {
+    var note = notes.find(function(n) { return n.id === id; });
+    if (note) note[field] = value;
+    saveNotes(); // save without re-rendering
+  }
+
+  // ============================================================
+  // 6. DELETE A NOTE
+  // ============================================================
+  function deleteNote(id) {
+    notes = notes.filter(function(n) { return n.id !== id; });
+    renderNotes();
+  }
+
+  // ============================================================
+  // 7. SAVE TO LOCALSTORAGE
+  // ============================================================
+  function saveNotes() {
+    localStorage.setItem('myNotes', JSON.stringify(notes));
+  }
+
+  //============================================================
+  // 8. LOAD FROM LOCALSTORAGE
+  // ============================================================
+  function loadNotes() {
+    var saved = localStorage.getItem('myNotes');
+    if (saved) notes = JSON.parse(saved);
+    renderNotes();
+  }
+
+  // ============================================================
+  // 9. EVENT LISTENERS
+  // ============================================================
+  addBtn.addEventListener('click', addNote);
+
+  // ============================================================
+  // 10. LOAD NOTES ON PAGE START
+  // ============================================================
+  loadNotes();
+
+</script>
+
+</script>
+</body>
+</html>
