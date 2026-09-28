@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ArrowUpRight, Github } from "lucide-react";
+import { ArrowUpRight, Code2 } from "lucide-react";
 import { site } from "@/data/site";
 import { Reveal } from "@/components/reveal";
 
@@ -66,7 +66,7 @@ export function Projects() {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-foreground/70 transition hover:text-foreground"
                       >
-                        Code <Github size={15} />
+                        Code <Code2 size={15} />
                       </a>
                     )}
                   </div>

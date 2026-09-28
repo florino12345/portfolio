@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# my-dev-portfolio
 
-## Getting Started
+A single-page developer portfolio built with Next.js (App Router), TypeScript, and Tailwind CSS. Dark/light theme, smooth-scroll sections, and a contact form wired up to email via Resend.
 
-First, run the development server:
+## Running locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Editing content
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Almost everything on the page — your name, bio, socials, tech stack, projects, services, store items, stats — lives in one file:
 
-## Learn More
+```
+data/site.ts
+```
 
-To learn more about Next.js, take a look at the following resources:
+Edit the values there and the site updates; you shouldn't need to touch any component in `/components` for normal content changes. A few notes:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Profile photo**: add your photo to `/public` (e.g. `profile.jpg`) and update `avatar` in `data/site.ts` to point at it. A placeholder SVG (`/public/profile.svg`) is used until then.
+- **Project/product screenshots**: replace the files in `/public/projects` (or add new ones) and update the `image` paths in `data/site.ts`.
+- **Tech stack icons**: pulled live from [Simple Icons](https://simpleicons.org) using the `slug` field — find a slug by searching simpleicons.org.
+- **Site URL**: update `url` in `data/site.ts` once you have a domain — it feeds the metadata, Open Graph image, and `sitemap.ts`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Environment variables (contact form)
 
-## Deploy on Vercel
+The contact form posts to `/api/contact`, which sends the message to your inbox using [Resend](https://resend.com).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Copy `.env.example` to `.env.local`.
+2. Create a Resend account, verify a sending domain (or use their `onboarding@resend.dev` test address during development), and add your API key.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+CONTACT_EMAIL=you@example.com
+```
+
+Without these set, the form will show a friendly error asking visitors to email you directly instead of failing silently.
+
+## Deploying to Vercel
+
+1. Push this repo to GitHub.
+2. Import it at [vercel.com/new](https://vercel.com/new).
+3. Add `RESEND_API_KEY` and `CONTACT_EMAIL` as environment variables in the Vercel project settings.
+4. Deploy. Vercel will build and host the app automatically on every push.
+
+## Tech stack
+
+Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Framer Motion · next-themes · Resend
+
+## Project structure
+
+```
+app/            routes, layout, metadata, sitemap.ts, robots.ts, api/contact
+components/     one component per section (Navbar, Hero, Projects, Contact, ...)
+data/site.ts    all editable content
+lib/            small shared helpers
+public/         images, favicon, placeholder screenshots
+```

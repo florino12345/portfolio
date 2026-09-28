@@ -48,6 +48,8 @@ export type Social = {
 };
 
 export const site = {
+  // Update once you have a domain — used for metadata, OG tags, and sitemap.ts.
+  url: "https://example.com",
   name: "Alex Rivera",
   role: "Freelance Web Developer",
   headline: "I build fast, modern web apps with React & Supabase",
